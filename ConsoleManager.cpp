@@ -1,7 +1,17 @@
 #include "ConsoleManager.h"
 #include "UI_Utils.h"
+#include <chrono>
 #include <iostream>
 #include <sstream>
+#include <thread>
+
+namespace {
+    void countdown() {
+        for (int i = 0; i < 1; ++i) {
+            std::this_thread::sleep_for(std::chrono::seconds(1));
+        }
+    }
+}
 
 void ConsoleManager::startMainLoop() {
     UI_Utils::printHeader();
@@ -50,12 +60,14 @@ bool ConsoleManager::processCommand(const std::string& command) {
         std::cout << "report-util command recognized. Doing something.\n";
         return false;
     } else if (command == "clear") {
+        std::cout << "clear command recognized. Doing something.\n";
+        countdown();
         UI_Utils::clearScreen();
         UI_Utils::printHeader();
-        std::cout << "clear command recognized. Doing something.\n";
         return false;
     } else if (command == "exit") {
-        std::cout << "exit command recognized.\nExiting.\n";
+        std::cout << "exit command recognized. Doing something.\n";
+        countdown();
         return true;
     }
 
