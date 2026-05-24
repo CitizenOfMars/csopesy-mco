@@ -1,14 +1,29 @@
 #include "ConsoleManager.h"
 #include "UI_Utils.h"
 #include <iostream>
+#include <sstream>
 
 void ConsoleManager::startMainLoop() {
     UI_Utils::printHeader();
+    std::string inputLine;
     std::string command;
 
     while (true) {
         std::cout << "Enter a command: ";
-        std::cin >> command;
+        if (!std::getline(std::cin, inputLine)) {
+            break;
+        }
+
+        std::istringstream inputStream(inputLine);
+        if (!(inputStream >> command)) {
+            continue;
+        }
+
+        std::string extraToken;
+        if (inputStream >> extraToken) {
+            std::cout << "command not recognized\n";
+            continue;
+        }
 
         if (processCommand(command)) {
             break;
