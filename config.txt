@@ -1,0 +1,29 @@
+# CSOPESY CPU Scheduler Configuration
+# This file is read during the "initialize" command.
+# Format: parameter_name value
+# Lines starting with # are comments.
+
+# Number of CPU cores available [1, 128]
+num-cpu 5
+
+# Scheduler algorithm: "fcfs" (First-Come-First-Served) or "rr" (Round-Robin)
+scheduler rr
+
+# Time slice for round-robin scheduler in CPU cycles [1, 2^32]
+# Has no effect if using FCFS scheduler
+quantum-cycles 5
+
+# Frequency of batch process generation in CPU cycles [1, 2^32]
+# Used by "scheduler-start" command. If 1, new process generated every cycle.
+batch-process-freq 1
+
+# Minimum number of instructions per process [1, 2^32]
+min-ins 1000
+
+# Maximum number of instructions per process [1, 2^32]
+max-ins 2000
+
+# Delay before executing next instruction in CPU cycles [0, 2^32]
+# This is a busy-waiting scheme where process remains in CPU.
+# If 0, each instruction executes per CPU cycle.
+delays-per-exec 0

@@ -1,18 +1,34 @@
 #include "Scheduler.h"
 #include <chrono>
+#include <iostream>
 
-Scheduler::Scheduler() : coreProcess(NUM_CORES, nullptr) {}
+Scheduler::Scheduler() : config(ConfigParser::getDefaults()), coreProcess(config.numCpu, nullptr) {}
 
 Scheduler::~Scheduler() {
     stop();
+}
+
+bool Scheduler::loadConfig(const std::string& filePath) {
+    if (running.load()) {
+        std::cerr << "Cannot load config while scheduler is running.\n";
+        return false;
+    }
+
+    config = ConfigParser::loadConfig(filePath);
+
+    // Resize core process vector to match new CPU count
+    coreProcess.clear();
+    coreProcess.resize(config.numCpu, nullptr);
+
+    return true;
 }
 
 void Scheduler::start() {
     if (running.load()) return;
     running.store(true);
 
-    // Spawn one worker thread per core
-    for (int i = 0; i < NUM_CORES; ++i) {
+    // Spawn one worker thread per core (using config value)
+    for (int i = 0; i < static_cast<int>(config.numCpu); ++i) {
         workerThreads.emplace_back(&Scheduler::workerLoop, this, i);
     }
 }
@@ -42,7 +58,7 @@ void Scheduler::addProcess(std::shared_ptr<Process> process) {
     readyCV.notify_one();
 }
 
-// Each worker thread picks one process from the FCFS queue and runs it to completion
+// Each worker thread picks one process from the ready queue and executes it
 void Scheduler::workerLoop(int coreId) {
     while (running.load()) {
         std::shared_ptr<Process> proc;
@@ -61,6 +77,11 @@ void Scheduler::workerLoop(int coreId) {
             readyQueue.pop();
         }
 
+        // Initialize log file with header (only the very first time the process is run)
+        if (proc->currentInstruction.load() == 0) {
+            proc->initLogFile();
+        }
+
         // Mark as running on this core
         proc->state.store(ProcessState::RUNNING);
         proc->coreId.store(coreId);
@@ -70,23 +91,35 @@ void Scheduler::workerLoop(int coreId) {
             coreProcess[coreId] = proc;
         }
 
-        // Initialize log file with header (only first time)
-        proc->initLogFile();
-
-        // Execute all instructions one by one (each is one "print" command)
-        while (proc->currentInstruction.load() < proc->totalInstructions) {
+        // Execute instructions (or process sleep ticks)
+        while (proc->currentInstruction.load() < proc->totalInstructions || proc->sleepTicksRemaining.load() > 0) {
             if (!running.load()) {
                 // Scheduler stopped; put process back so it can resume later
                 {
                     std::lock_guard<std::mutex> lock(readyMutex);
+                    proc->state.store(ProcessState::WAITING);
+                    proc->coreId.store(-1);
                     readyQueue.push(proc);
                 }
                 break;
             }
-            proc->executeOneInstruction(coreId);
+            
+            bool yield = proc->executeOneInstruction(coreId);
 
-            // Small yield to avoid starving other threads / burning CPU
+            // Small yield to avoid starving other host OS threads
             std::this_thread::sleep_for(std::chrono::milliseconds(1));
+
+            if (yield) {
+                // Process yielded CPU (e.g., SLEEP) -> Relinquish
+                proc->state.store(ProcessState::WAITING);
+                proc->coreId.store(-1);
+                {
+                    std::lock_guard<std::mutex> lock(readyMutex);
+                    readyQueue.push(proc);
+                }
+                readyCV.notify_one(); // Notify in case another worker is currently idle
+                break; // Break the execution loop to fetch a new process
+            }
         }
 
         // Clear core slot

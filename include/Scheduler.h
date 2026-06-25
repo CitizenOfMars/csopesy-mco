@@ -1,5 +1,6 @@
 #pragma once
-#include "Process.h"
+#include "ProcessManager.h"
+#include "ConfigParser.h"
 #include <vector>
 #include <queue>
 #include <thread>
@@ -9,17 +10,24 @@
 #include <memory>
 #include <string>
 
-static constexpr int NUM_CORES = 4;
-
 class Scheduler {
 public:
     Scheduler();
     ~Scheduler();
 
+    // Load configuration from config.txt
+    bool loadConfig(const std::string& filePath = "config.txt");
+
     // Start/stop the scheduler and worker threads
     void start();
     void stop();
     bool isRunning() const { return running.load(); }
+
+    // Get current configuration
+    const Config& getConfig() const { return config; }
+
+    // Get number of CPU cores (from config)
+    int getNumCores() const { return static_cast<int>(config.numCpu); }
 
     // Add a new process to the ready queue
     void addProcess(std::shared_ptr<Process> process);
@@ -44,6 +52,9 @@ private:
 
     std::atomic<bool> running{false};
 
+    // Configuration (loaded from config.txt)
+    Config config;
+
     // Ready queue protected by readyMutex
     mutable std::mutex readyMutex;
     std::condition_variable readyCV;
@@ -51,7 +62,7 @@ private:
 
     // Per-core: current process being executed (nullptr = idle)
     mutable std::mutex coreMutex;
-    std::vector<std::shared_ptr<Process>> coreProcess; // size NUM_CORES
+    std::vector<std::shared_ptr<Process>> coreProcess; // size = numCpu from config
 
     // All processes ever added (for lookup and snapshot)
     mutable std::mutex allMutex;

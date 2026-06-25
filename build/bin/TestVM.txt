@@ -1,0 +1,8 @@
+Process name: TestVM
+Logs:
+
+(06/25/2026 03:58:39PM) Core:1 "Addition Result (75): 75"
+(06/25/2026 03:58:40PM) Core:1 "Subtraction Result (25): 25"
+(06/25/2026 03:58:40PM) Core:1 "Inside the FOR loop!"
+(06/25/2026 03:58:40PM) Core:1 "Inside the FOR loop!"
+(06/25/2026 03:58:40PM) Core:1 "Inside the FOR loop!"

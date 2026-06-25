@@ -8,8 +8,11 @@
                 "-fcolor-diagnostics",
                 "-fansi-escape-codes",
                 "-g",
-                "${workspaceFolder}/main.cpp",
-                "${workspaceFolder}/ConsoleManager.cpp",
+                "-I${workspaceFolder}/include",
+                "${workspaceFolder}/src/main.cpp",
+                "${workspaceFolder}/src/ConsoleManager.cpp",
+                "${workspaceFolder}/src/Scheduler.cpp",
+                "${workspaceFolder}/src/ConfigParser.cpp",
                 "-o",
                 "${workspaceFolder}/app"
             ],

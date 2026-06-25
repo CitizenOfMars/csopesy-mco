@@ -1,0 +1,3 @@
+C:/Users/rusel_5mliqzd/Downloads/csopesy-mco/csopesy-mco/build/CMakeFiles/csopesy.dir
+C:/Users/rusel_5mliqzd/Downloads/csopesy-mco/csopesy-mco/build/CMakeFiles/edit_cache.dir
+C:/Users/rusel_5mliqzd/Downloads/csopesy-mco/csopesy-mco/build/CMakeFiles/rebuild_cache.dir
